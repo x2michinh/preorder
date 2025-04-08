@@ -22,7 +22,35 @@ fetch(API_URL)
   })
   .catch(error => console.error("Lỗi khi lấy dữ liệu:", error));
 
-// Hàm thêm sản phẩm vào giỏ hàng
-function addToCart(id, name) {
-  alert(`Đã thêm sản phẩm "${name}" vào giỏ hàng.`);
+let cart = [];
+
+function addToCart(productName, price) {
+    cart.push({ productName, price });
+    updateCart();
+}
+
+function updateCart() {
+    const cartItems = document.getElementById('cart-items');
+    cartItems.innerHTML = '';
+    cart.forEach(item => {
+        const div = document.createElement('div');
+        div.textContent = `${item.productName} - ${item.price} VND`;
+        cartItems.appendChild(div);
+    });
+}
+
+function submitOrder() {
+    const form = document.getElementById('order-form');
+    const formData = new FormData(form);
+    const customerInfo = Object.fromEntries(formData.entries());
+
+    fetch('https://script.google.com/macros/s/AKfycbwEzWTiq4Hb4MleSvxpsr8e40td5XquaZWpNOIpc0cAOim76kSdVdiV9fKohb4_apqRkg/exec', {
+        method: 'POST',
+        body: JSON.stringify({ cart, customer: customerInfo }),
+    })
+    .then(response => response.json())
+    .then(data => alert('Đơn hàng đã được gửi thành công!'))
+    .catch(error => console.error('Error:', error));
+}
+
 }
