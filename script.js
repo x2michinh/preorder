@@ -1,61 +1,47 @@
-// URL của Web App đã triển khai từ Apps Script
-const API_URL = "https://script.google.com/macros/s/AKfycbwEzWTiq4Hb4MleSvxpsr8e40td5XquaZWpNOIpc0cAOim76kSdVdiV9fKohb4_apqRkg/exec";
-
-function loadProducts() {
-    fetch(API_URL)
-        .then(response => response.json())
-        .then(data => {
-            const container = document.body;
-            data.forEach((row, index) => {
-                if (index === 0) return; // Bỏ qua hàng tiêu đề
-                const [category, productName, quantity, price] = row;
-
-                const productDiv = document.createElement('div');
-                productDiv.className = 'product';
-                productDiv.innerHTML = `
-                    <p>Category: ${category}</p>
-                    <p>Product Name: ${productName}</p>
-                    <p>Quantity: ${quantity}</p>
-                    <p>Price: ${price} VND</p>
-                `;
-                container.appendChild(productDiv);
-            });
-        })
-        .catch(error => console.error('Error:', error));
-}
-
-// Gọi hàm loadProducts khi trang web được tải
-window.onload = loadProducts;
+const menuDiv = document.getElementById("menu");
+const productListDiv = document.getElementById("product-list");
+const cartDetailsDiv = document.getElementById("cart-details");
+const checkoutButton = document.getElementById("checkout-button");
 
 let cart = [];
 
-function addToCart(productName, price) {
-    cart.push({ productName, price });
-    updateCart();
+// Lấy dữ liệu sản phẩm từ Apps Script
+async function fetchProducts() {
+    const response = await fetch("https://script.google.com/macros/s/AKfycbwEzWTiq4Hb4MleSvxpsr8e40td5XquaZWpNOIpc0cAOim76kSdVdiV9fKohb4_apqRkg/exec");
+    const data = await response.json();
+    renderProducts(data);
 }
 
-function updateCart() {
-    const cartItems = document.getElementById('cart-items');
-    cartItems.innerHTML = '';
-    cart.forEach(item => {
-        const div = document.createElement('div');
-        div.textContent = `${item.productName} - ${item.price} VND`;
-        cartItems.appendChild(div);
+// Hiển thị danh sách sản phẩm
+function renderProducts(products) {
+    products.forEach(product => {
+        const itemDiv = document.createElement("div");
+        itemDiv.innerHTML = `
+            <p>${product[1]} - Giá: ${product[2]} - Tồn kho: ${product[3]}</p>
+            <input type="number" min="1" max="${product[3]}" value="1">
+            <button onclick="addToCart('${product[1]}', ${product[2]}, this.previousElementSibling.value)">Thêm vào giỏ hàng</button>
+        `;
+        productListDiv.appendChild(itemDiv);
     });
 }
 
-function submitOrder() {
-    const form = document.getElementById('order-form');
-    const formData = new FormData(form);
-    const customerInfo = Object.fromEntries(formData.entries());
-
-    fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ cart, customer: customerInfo }),
-    })
-    .then(response => response.json())
-    .then(data => alert('Đơn hàng đã được gửi thành công!'))
-    .catch(error => console.error('Error:', error));
+// Thêm sản phẩm vào giỏ hàng
+function addToCart(name, price, quantity) {
+    cart.push({ name, price, quantity });
+    alert("Đã thêm sản phẩm vào giỏ hàng!");
 }
 
-}
+// Hiển thị chi tiết giỏ hàng khi click "Xem giỏ hàng"
+checkoutButton.addEventListener("click", () => {
+    cartDetailsDiv.innerHTML = "";
+    let total = 0;
+    cart.forEach(item => {
+        total += item.price * item.quantity;
+        const itemDiv = document.createElement("div");
+        itemDiv.textContent = `${item.name} - Số lượng: ${item.quantity} - Tổng: ${item.price * item.quantity}`;
+        cartDetailsDiv.appendChild(itemDiv);
+    });
+    const totalDiv = document.createElement("div");
+    totalDiv.textContent = `Tổng tiền: ${total}`;
+    cartDetailsDiv.appendChild(totalDiv);
+});
