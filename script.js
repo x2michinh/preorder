@@ -1,26 +1,31 @@
 // URL của Web App đã triển khai từ Apps Script
 const API_URL = "https://script.google.com/macros/s/AKfycbwEzWTiq4Hb4MleSvxpsr8e40td5XquaZWpNOIpc0cAOim76kSdVdiV9fKohb4_apqRkg/exec";
 
-fetch(API_URL)
-  .then(response => response.json())
-  .then(data => {
-    const productsDiv = document.getElementById("products");
+function loadProducts() {
+    fetch(API_URL)
+        .then(response => response.json())
+        .then(data => {
+            const container = document.body;
+            data.forEach((row, index) => {
+                if (index === 0) return; // Bỏ qua hàng tiêu đề
+                const [category, productName, quantity, price] = row;
 
-    data.forEach(product => {
-      if (product.quantity > 0) { // Chỉ hiển thị sản phẩm còn hàng
-        const productDiv = document.createElement("div");
-        productDiv.className = "product";
-        productDiv.innerHTML = `
-          <h3>${product.name}</h3>
-          <p>Giá: ${product.price} VND</p>
-          <p>Số lượng còn lại: ${product.quantity}</p>
-          <button onclick="addToCart('${product.id}', '${product.name}')">Thêm vào giỏ hàng</button>
-        `;
-        productsDiv.appendChild(productDiv);
-      }
-    });
-  })
-  .catch(error => console.error("Lỗi khi lấy dữ liệu:", error));
+                const productDiv = document.createElement('div');
+                productDiv.className = 'product';
+                productDiv.innerHTML = `
+                    <p>Category: ${category}</p>
+                    <p>Product Name: ${productName}</p>
+                    <p>Quantity: ${quantity}</p>
+                    <p>Price: ${price} VND</p>
+                `;
+                container.appendChild(productDiv);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Gọi hàm loadProducts khi trang web được tải
+window.onload = loadProducts;
 
 let cart = [];
 
@@ -44,7 +49,7 @@ function submitOrder() {
     const formData = new FormData(form);
     const customerInfo = Object.fromEntries(formData.entries());
 
-    fetch('https://script.google.com/macros/s/AKfycbwEzWTiq4Hb4MleSvxpsr8e40td5XquaZWpNOIpc0cAOim76kSdVdiV9fKohb4_apqRkg/exec', {
+    fetch(API_URL, {
         method: 'POST',
         body: JSON.stringify({ cart, customer: customerInfo }),
     })
